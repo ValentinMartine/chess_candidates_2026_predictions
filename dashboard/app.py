@@ -128,22 +128,21 @@ def get_upcoming_matches():
 
 # ─── UI ───────────────────────────────────────────────────────────────────────
 st.set_page_config(page_title="FIDE Candidates 2026", layout="wide")
-st.title("♟️ FIDE Candidates 2026 — Dashboard Prédictif")
-st.markdown("Classement en temps réel et prédictions IA pour les rondes restantes.")
+st.title("♟️ FIDE Candidates 2026 - Dashboard prédictif")
+st.markdown("Classement en temps réel et prédictions pour les rondes restantes.")
 
 config = load_config()
 col1, col2 = st.columns([1, 2])
 
 # ── Standings ─────────────────────────────────────────────────────────────────
 with col1:
-    st.subheader("📊 Classement actuel")
-    standings = get_current_standings()
+    st.subheader("📊 Classement actuel")    standings = get_current_standings()
     standings.insert(0, "#", range(1, len(standings) + 1))
     st.dataframe(standings, hide_index=True, use_container_width=True)
 
 # ── Upcoming Match Probabilities ──────────────────────────────────────────────
 with col2:
-    st.subheader("🔮 Probabilités — Prochains matchs")
+    st.subheader("🔮 Probabilités - prochains matchs")
 
     if not os.path.exists(MODEL_PATH):
         st.warning(
@@ -233,7 +232,7 @@ with col2:
 
 # ── Monte Carlo Forecast ───────────────────────────────────────────────────────
 st.divider()
-st.subheader("📈 Prévision du tournoi — Simulation Monte Carlo")
+st.subheader("📈 Prévision du tournoi - simulation Monte Carlo")
 
 if st.button("🚀 Lancer 1 000 simulations"):
     with st.spinner("Simulation en cours…"):
