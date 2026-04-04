@@ -41,10 +41,10 @@ def run_analysis():
     pipeline = ChessFeaturePipeline(config)
     fetcher = ChessDataFetcher(players)
 
-    # 2. Get Current Matches (Real rounds 1-4)
+    # 2. Get Current Matches (played rounds only)
     conn = sqlite3.connect(DEFAULT_DB)
     current_matches = pd.read_sql_query(
-        "SELECT * FROM matches WHERE tournament = 'Candidates 2026'", conn
+        "SELECT * FROM matches WHERE tournament = 'Candidates 2026' AND result IS NOT NULL", conn
     )
     conn.close()
 
@@ -92,13 +92,14 @@ def run_analysis():
     # 4. Run Final Forecast
     logger.info("--- TOURNAMENT FORECAST (10,000 simulations) ---")
     all_pairings = fetcher.fetch_candidates_pairings()
-    # Remaining matches are those with round > 4
-    remaining_pairings = all_pairings[all_pairings["round"] > 4].copy()
+    # Remaining matches are those after the last completed round
+    last_completed_round = int(current_matches["round"].max()) if len(current_matches) > 0 else 0
+    remaining_pairings = all_pairings[all_pairings["round"] > last_completed_round].copy()
 
     # Enrich remaining pairings with Elo
     remaining_pairings["white_elo"] = remaining_pairings["white_id"].map(elo_map)
     remaining_pairings["black_elo"] = remaining_pairings["black_id"].map(elo_map)
-    remaining_pairings["result"] = 0.5  # Placeholder
+    remaining_pairings["result"] = np.nan  # Placeholder — NaN so simulator treats them as unplayed
     remaining_pairings["tournament"] = "Candidates 2026"
     remaining_pairings["played_at"] = pd.Timestamp.now()
 

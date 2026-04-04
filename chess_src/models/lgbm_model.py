@@ -11,25 +11,25 @@ FEATURE_COLS = [
     "black_elo_intra_delta",
     "elo_diff",
     "form_black",
-    "round_norm",
     "white_elo_intra_delta",
+    "round_norm",
     "form_white",
+    "h2h_recent_points_white",
     "form_diff",
     "black_color_streak",
-    "h2h_recent_points_white",
-    "white_color_streak",
-    "white_last2_score",
     "black_gap_to_leader",
+    "white_color_streak",
     "h2h_matches",
+    "white_last2_score",
     "tournament_points_diff",
-    "black_last2_score",
     "white_gap_to_leader",
-    "elo_prob_white",
-    "white_tournament_points",
+    "black_last2_score",
     "black_tournament_points",
     "white_color_balance",
-    "h2h_points_white",
+    "white_tournament_points",
     "black_color_balance",
+    "elo_prob_white",
+    "h2h_points_white",
 ]
 
 
@@ -75,7 +75,7 @@ class ChessLGBMModel:
         """Fit isotonic calibration on a held-out calibration set."""
         X_cal, y_cal = self._prepare_data(df_cal)
         self._calibrated = CalibratedClassifierCV(
-            self.model, method="sigmoid", cv="prefit"
+            self.model, method="sigmoid", cv=None
         )
         self._calibrated.fit(X_cal, y_cal)
 
