@@ -136,7 +136,8 @@ col1, col2 = st.columns([1, 2])
 
 # ── Standings ─────────────────────────────────────────────────────────────────
 with col1:
-    st.subheader("📊 Classement actuel")    standings = get_current_standings()
+    st.subheader("📊 Classement actuel")
+    standings = get_current_standings()
     standings.insert(0, "#", range(1, len(standings) + 1))
     st.dataframe(standings, hide_index=True, use_container_width=True)
 
