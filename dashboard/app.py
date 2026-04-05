@@ -246,22 +246,27 @@ if st.button("🚀 Lancer 1 000 simulations"):
             upcoming_tourney = get_upcoming_matches()
             upcoming_tourney["result"] = np.nan
 
+            n_sims = 1000
             simulator = CandidatesSimulator(
-                _model, _pipeline, _players, num_simulations=1000
+                _model, _pipeline, _players, num_simulations=n_sims
             )
             raw_results = simulator.simulate(completed_tourney, upcoming_tourney)
 
-            # Map FIDE IDs → player names
+            # Map FIDE IDs → player names, compute 95% CI from binomial SE
             id_to_name = {p["fide_id"]: p["name"] for p in _players}
+            rows = []
+            for pid, prob in raw_results.items():
+                se = np.sqrt(prob * (1 - prob) / n_sims)
+                lo = max(0.0, prob - 1.96 * se)
+                hi = min(1.0, prob + 1.96 * se)
+                rows.append({
+                    "Joueur": id_to_name.get(pid, str(pid)),
+                    "Estimation": round(prob * 100, 1),
+                    "Fourchette (95%)": f"{lo*100:.0f}% – {hi*100:.0f}%",
+                })
             res_df = (
-                pd.DataFrame(
-                    [
-                        (id_to_name.get(pid, str(pid)), round(prob * 100, 1))
-                        for pid, prob in raw_results.items()
-                    ],
-                    columns=["Joueur", "% Victoire tournoi"],
-                )
-                .sort_values("% Victoire tournoi", ascending=False)
+                pd.DataFrame(rows)
+                .sort_values("Estimation", ascending=False)
                 .reset_index(drop=True)
             )
             res_df.insert(0, "#", range(1, len(res_df) + 1))
@@ -270,7 +275,7 @@ if st.button("🚀 Lancer 1 000 simulations"):
             with col_a:
                 st.dataframe(res_df, hide_index=True, use_container_width=True)
             with col_b:
-                st.bar_chart(res_df.set_index("Joueur")["% Victoire tournoi"])
+                st.bar_chart(res_df.set_index("Joueur")["Estimation"])
 
         except Exception as e:
             st.error(f"Erreur de simulation : {e}")
