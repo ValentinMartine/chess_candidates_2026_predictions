@@ -1,17 +1,16 @@
+import math
 import numpy as np
 import pandas as pd
-import math
 
 
 class ChessFormCalculator:
-    def __init__(self, window: int = 15):
+    def __init__(self, window: int = 15, decay: float = 0.3):
         self.window = window
+        # Exponential decay rate: higher = recent games count much more than old ones.
+        # decay=0.3 means game N-1 weights ~1.35x game N-2, N-2 ~1.35x N-3, etc.
+        self.decay = decay
 
     def compute(self, df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Calculates recent form (TPR - Tournament Performance Rating).
-        For each match, look at the last N games of each player and calculate their TPR.
-        """
         df = df.sort_values("played_at").reset_index(drop=True).copy()
 
         form_white_list = []
@@ -23,7 +22,6 @@ class ChessFormCalculator:
         for pos, (idx, row) in enumerate(df.iterrows()):
             w_id = int(row["white_id"])
             b_id = int(row["black_id"])
-
             form_white_list.append(self._calculate_tpr(df, w_id, pos))
             form_black_list.append(self._calculate_tpr(df, b_id, pos))
 
@@ -40,9 +38,7 @@ class ChessFormCalculator:
             | (past_slice["black_id"] == player_id)
         ].tail(self.window)
 
-        n = len(past)
-        if n == 0:
-            # No history yet: use the player's current Elo as neutral TPR estimate
+        if len(past) == 0:
             cur = df.iloc[current_pos]
             if int(cur["white_id"]) == player_id:
                 return float(cur["white_elo"])
@@ -52,21 +48,31 @@ class ChessFormCalculator:
         opponent_elos = []
         for _, m in past.iterrows():
             if pd.isna(m["result"]):
-                continue  # skip prediction rows
+                continue
             if m["white_id"] == player_id:
                 scores.append(float(m["result"]))
-                opponent_elos.append(m["black_elo"])
+                opponent_elos.append(float(m["black_elo"]))
             else:
                 scores.append(1.0 - float(m["result"]))
-                opponent_elos.append(m["white_elo"])
+                opponent_elos.append(float(m["white_elo"]))
 
-        avg_opponent_elo = np.mean(opponent_elos)
-        avg_score = np.mean(scores)
+        if not scores:
+            cur = df.iloc[current_pos]
+            if int(cur["white_id"]) == player_id:
+                return float(cur["white_elo"])
+            return float(cur["black_elo"])
+
+        # Exponential weights: index 0 = oldest, index n-1 = most recent
+        n = len(scores)
+        weights = np.array([math.exp(self.decay * i) for i in range(n)])
+        weights /= weights.sum()
+
+        avg_score = float(np.dot(weights, scores))
+        avg_opponent_elo = float(np.dot(weights, opponent_elos))
 
         if avg_score >= 1.0:
             return avg_opponent_elo + 400
         if avg_score <= 0.0:
             return avg_opponent_elo - 400
 
-        tpr = avg_opponent_elo + 400 * math.log10(avg_score / (1 - avg_score))
-        return tpr
+        return avg_opponent_elo + 400 * math.log10(avg_score / (1 - avg_score))

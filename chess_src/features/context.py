@@ -1,3 +1,4 @@
+import math
 import pandas as pd
 
 
@@ -15,38 +16,48 @@ def _color_streak(history: list) -> int:
     return streak if last == "W" else -streak
 
 
+def intra_tpr(history: list, default_elo: float = 2700.0) -> float:
+    """TPR from (score, opp_elo) pairs accumulated within the current tournament."""
+    if not history:
+        return default_elo
+    scores = [s for s, _ in history]
+    opp_elos = [e for _, e in history]
+    avg_score = sum(scores) / len(scores)
+    avg_opp = sum(opp_elos) / len(opp_elos)
+    if avg_score >= 1.0:
+        return avg_opp + 400
+    if avg_score <= 0.0:
+        return avg_opp - 400
+    return avg_opp + 400 * math.log10(avg_score / (1 - avg_score))
+
+
 class ChessContextCalculator:
     def __init__(self, total_rounds: int = 14):
         self.total_rounds = total_rounds
 
     def compute(self, df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Adds tournament-specific context features.
-        - round_number: normalize current round
-        - is_closing_stage: flag for final rounds (11-14)
-        - color: white/black advantage (already inherent in white_elo vs black_elo but we can add it)
-        - points_delta: difference in current tournament standings
-        """
         df = df.copy()
-        # Clean round numbers (TWIC uses 1.29, ?, etc.)
         df["round"] = (
             pd.to_numeric(df["round"], errors="coerce").fillna(1).astype(float)
         )
-
         df = df.sort_values(["tournament", "round"])
 
-        # Standings tracking per tournament
         for col in [
             "white_tournament_points",
             "black_tournament_points",
             "white_last2_score",
             "black_last2_score",
+            "white_last3_score",
+            "black_last3_score",
             "white_color_balance",
             "black_color_balance",
             "white_gap_to_leader",
             "black_gap_to_leader",
             "white_color_streak",
             "black_color_streak",
+            "white_intra_tpr",
+            "black_intra_tpr",
+            "intra_tpr_diff",
         ]:
             df[col] = 0.0
 
@@ -54,18 +65,20 @@ class ChessContextCalculator:
             t_mask = df["tournament"] == tourney
             t_df = df[t_mask].sort_values(["round", "played_at"])
 
-            points = {}  # player_id -> cumulative points
+            points = {}          # player_id -> cumulative points
             rounds_history = {}  # player_id -> [(round_num, score)]
-            colors = {}  # player_id -> (whites_count, blacks_count)
-
-            color_history = {}  # player_id -> list of 'W'/'B' in order
+            colors = {}          # player_id -> (whites_count, blacks_count)
+            color_history = {}   # player_id -> list of 'W'/'B'
+            intra_history = {}   # player_id -> [(score, opp_elo)]
 
             for idx, row in t_df.iterrows():
                 w_id = row["white_id"]
                 b_id = row["black_id"]
                 round_num = row["round"]
+                w_elo = float(row.get("white_elo", 2700.0))
+                b_elo = float(row.get("black_elo", 2700.0))
 
-                # Snapshot BEFORE this match
+                # ── Snapshot BEFORE this match ─────────────────────────────
                 df.at[idx, "white_tournament_points"] = points.get(w_id, 0.0)
                 df.at[idx, "black_tournament_points"] = points.get(b_id, 0.0)
 
@@ -73,6 +86,8 @@ class ChessContextCalculator:
                 b_hist = sorted(rounds_history.get(b_id, []), key=lambda x: x[0])
                 df.at[idx, "white_last2_score"] = sum(s for _, s in w_hist[-2:])
                 df.at[idx, "black_last2_score"] = sum(s for _, s in b_hist[-2:])
+                df.at[idx, "white_last3_score"] = sum(s for _, s in w_hist[-3:])
+                df.at[idx, "black_last3_score"] = sum(s for _, s in b_hist[-3:])
 
                 w_col = colors.get(w_id, (0, 0))
                 b_col = colors.get(b_id, (0, 0))
@@ -90,7 +105,13 @@ class ChessContextCalculator:
                     color_history.get(b_id, [])
                 )
 
-                # Update state AFTER this match
+                w_itpr = intra_tpr(intra_history.get(w_id, []), default_elo=w_elo)
+                b_itpr = intra_tpr(intra_history.get(b_id, []), default_elo=b_elo)
+                df.at[idx, "white_intra_tpr"] = w_itpr
+                df.at[idx, "black_intra_tpr"] = b_itpr
+                df.at[idx, "intra_tpr_diff"] = w_itpr - b_itpr
+
+                # ── Update state AFTER this match ──────────────────────────
                 res = row["result"]
                 if pd.notna(res):
                     res = float(res)
@@ -104,6 +125,8 @@ class ChessContextCalculator:
                     colors[b_id] = (b_whites, b_blacks + 1)
                     color_history.setdefault(w_id, []).append("W")
                     color_history.setdefault(b_id, []).append("B")
+                    intra_history.setdefault(w_id, []).append((res, b_elo))
+                    intra_history.setdefault(b_id, []).append((1.0 - res, w_elo))
 
         df["tournament_points_diff"] = (
             df["white_tournament_points"] - df["black_tournament_points"]
