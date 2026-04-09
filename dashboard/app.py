@@ -205,14 +205,13 @@ with col2:
                     def style_row(row):
                         base = ROW_ODD if round_parity.get(row["Ronde"], 0) else ROW_EVEN
                         pb, pn, pk = row["Victoire Blancs"], row["Nulle"], row["Victoire Noirs"]
-                        best = max(pb, pn, pk)
-                        if best == pb:
-                            wb, wn, wk = GREEN, ORANGE, RED
-                        elif best == pn:
-                            wb, wn, wk = ORANGE, GREEN, ORANGE
-                        else:
-                            wb, wn, wk = RED, ORANGE, GREEN
-                        return [base, base, base, wb, wn, wk]
+                        ranked = sorted(
+                            [("pb", pb), ("pn", pn), ("pk", pk)],
+                            key=lambda x: x[1], reverse=True
+                        )
+                        palette = [GREEN, ORANGE, RED]
+                        color_map = {name: palette[i] for i, (name, _) in enumerate(ranked)}
+                        return [base, base, base, color_map["pb"], color_map["pn"], color_map["pk"]]
 
                     styled = (
                         display_df.style
