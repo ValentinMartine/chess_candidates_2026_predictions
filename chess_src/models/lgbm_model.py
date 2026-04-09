@@ -10,12 +10,12 @@ from sklearn.calibration import CalibratedClassifierCV
 FEATURE_COLS = [
     "black_elo_intra_delta",
     "elo_diff",
-    "white_elo_intra_delta",
     "form_white",
     "round_norm",
     "form_black",
-    "h2h_recent_points_white",
     "form_diff",
+    "white_elo_intra_delta",
+    "h2h_recent_points_white",
     "black_color_streak",
     "white_color_streak",
     "h2h_matches",
@@ -26,9 +26,9 @@ FEATURE_COLS = [
     "tournament_points_diff",
     "black_tournament_points",
     "white_color_balance",
-    "black_color_balance",
-    "white_tournament_points",
     "elo_prob_white",
+    "white_tournament_points",
+    "black_color_balance",
     "h2h_points_white",
 ]
 
