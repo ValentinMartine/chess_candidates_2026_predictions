@@ -36,7 +36,10 @@ class CandidatesSimulator:
         self.pipeline = pipeline
         self.players = players_config
         self.num_simulations = num_simulations
-        self.elo_map = {p["fide_id"]: float(p["rating_april_2006"]) for p in players_config}
+        self.elo_map = {
+            p["fide_id"]: float(p.get("rating_april_2006") or p.get("rating_april_2026", 2500))
+            for p in players_config
+        }
 
     def simulate(
         self, current_matches: pd.DataFrame, remaining_matches: pd.DataFrame
