@@ -3,35 +3,35 @@
 players:
   - name: "Aleksandra Goryachkina"
     fide_id: 4147103
-    rating_april_2026: 2560
+    rating_april_2006: 2560
     country: "FID"
   - name: "Divya Deshmukh"
     fide_id: 35006916
-    rating_april_2026: 2548
+    rating_april_2006: 2548
     country: "IND"
   - name: "Kateryna Lagno"
     fide_id: 14109336
-    rating_april_2026: 2530
+    rating_april_2006: 2530
     country: "FID"
   - name: "Zhu Jiner"
     fide_id: 8608059
-    rating_april_2026: 2528
+    rating_april_2006: 2528
     country: "CHN"
   - name: "Vaishali Rameshbabu"
     fide_id: 5091756
-    rating_april_2026: 2522
+    rating_april_2006: 2522
     country: "IND"
   - name: "Anna Muzychuk"
     fide_id: 14111330
-    rating_april_2026: 2518
+    rating_april_2006: 2518
     country: "UKR"
   - name: "Tan Zhongyi"
     fide_id: 8603642
-    rating_april_2026: 2510
+    rating_april_2006: 2510
     country: "CHN"
   - name: "Bibisara Assaubayeva"
     fide_id: 13708694
-    rating_april_2026: 2478
+    rating_april_2006: 2478
     country: "KAZ"
 
 # Model hyperparameters
