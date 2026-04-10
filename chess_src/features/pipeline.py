@@ -12,9 +12,9 @@ class ChessFeaturePipeline:
         # Initial ratings from config (8 candidates)
         players_config = self.config.get("players", [])
         initial_ratings = {
-            p["fide_id"]: p["rating_april_2006"]
+            p["fide_id"]: p.get("rating_april_2006") or p.get("rating_april_2026")
             for p in players_config
-            if "fide_id" in p
+            if "fide_id" in p and (p.get("rating_april_2006") or p.get("rating_april_2026"))
         }
 
         # Also load ratings for all other players from DB (TWIC opponents etc.)

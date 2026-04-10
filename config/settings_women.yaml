@@ -1,0 +1,64 @@
+# Chess Women's Candidates 2026 - Configuration
+
+players:
+  - name: "Aleksandra Goryachkina"
+    fide_id: 4147103
+    rating_april_2026: 2560
+    country: "FID"
+  - name: "Divya Deshmukh"
+    fide_id: 35006916
+    rating_april_2026: 2548
+    country: "IND"
+  - name: "Kateryna Lagno"
+    fide_id: 14109336
+    rating_april_2026: 2530
+    country: "FID"
+  - name: "Zhu Jiner"
+    fide_id: 8608059
+    rating_april_2026: 2528
+    country: "CHN"
+  - name: "Vaishali Rameshbabu"
+    fide_id: 5091756
+    rating_april_2026: 2522
+    country: "IND"
+  - name: "Anna Muzychuk"
+    fide_id: 14111330
+    rating_april_2026: 2518
+    country: "UKR"
+  - name: "Tan Zhongyi"
+    fide_id: 8603642
+    rating_april_2026: 2510
+    country: "CHN"
+  - name: "Bibisara Assaubayeva"
+    fide_id: 13708694
+    rating_april_2026: 2478
+    country: "KAZ"
+
+# Model hyperparameters
+models:
+  lgbm:
+    n_estimators: 200
+    learning_rate: 0.05
+    max_depth: 4
+    num_leaves: 15
+    min_child_samples: 5
+    subsample: 0.8
+    colsample_bytree: 0.8
+    reg_alpha: 0.5
+    reg_lambda: 1.0
+
+# Tournament configuration
+candidates_2026_women:
+  rounds: 14
+  format: "Double Round Robin"
+  start_date: "2026-04-01"
+  location: "Cyprus"
+
+# Feature engineering parameters
+features:
+  elo:
+    initial_rating: 1500
+    k_factor: 20
+  h2h:
+    min_matches: 0
+    decay_rate: 0.0005
